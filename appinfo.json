@@ -1,0 +1,30 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "redus",
+    "longName": "Yet Another Hex Clock",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "characterRegex": "[0-9A-F:| ]",
+                "file": "fonts/Square.ttf",
+                "name": "FONT_SQUARE_34",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Hex Clock",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "45fcbf16-538d-4c93-a31e-63142304f37b",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
