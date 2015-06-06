@@ -1,19 +1,36 @@
 #include <pebble.h>
 
 static Window *s_main_window;
-static TextLayer *s_date_layer, *s_time_layer;
-static GFont s_font;
+static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer;
+static GFont s_font, s_battery_font;
+
+
+// battery text
+static void battery_handler(BatteryChargeState charge_state) {
+	static char battery_text[4] = "64";
+
+	/*
+	if (charge_state.is_charging) {
+		snprintf(battery_text, sizeof(battery_text), "charging");
+	} else {
+    	snprintf(battery_text, sizeof(battery_text), "%d%%", charge_state.charge_percent);
+ 	}
+	*/
+	
+	snprintf(battery_text, sizeof(battery_text), "%x", charge_state.charge_percent);
+  	text_layer_set_text(s_battery_layer, battery_text);
+}
 
 /**
  * Ansi C "itoa" based on Kernighan & Ritchie's "Ansi C":
  */
-void strreverse(char* begin, char* end) {
+static void strreverse(char* begin, char* end) {
 	char aux;
 	while(end>begin)
 		aux=*end, *end--=*begin, *begin++=aux;
 }
 	
-void itoa(int value, char* str, int base) {
+static void itoa(int value, char* str, int base) {
 	static char num[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	char* wstr=str;
 	// int sign;
@@ -60,6 +77,16 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 static void main_window_load(Window *window){
 	window_set_background_color(s_main_window, GColorBlack);
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
+	s_battery_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
+	
+	// battery layer above date layer
+	s_battery_layer = text_layer_create(GRect(36, 30, 72, 20));
+	text_layer_set_background_color(s_battery_layer, GColorClear);
+	text_layer_set_text_color(s_battery_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+	text_layer_set_font(s_battery_layer, s_battery_font);
+	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
+	battery_handler(battery_state_service_peek());
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
 	
 	// date layer on top
 	s_date_layer = text_layer_create(GRect(0, 44, 144, 36));
@@ -81,11 +108,13 @@ static void main_window_load(Window *window){
 static void main_window_unload(Window *window){
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_time_layer);
+	text_layer_destroy(s_battery_layer);
 }
 
 static void init(){
 	// register w tick_timer_service
 	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+	battery_state_service_subscribe(battery_handler);
 	
 	s_main_window = window_create();
 	window_set_window_handlers(s_main_window, (WindowHandlers){
@@ -97,6 +126,8 @@ static void init(){
 
 static void deinit(){
 	window_destroy(s_main_window);
+	tick_timer_service_unsubscribe();
+  	battery_state_service_unsubscribe();
 }
 
 int main(void){
