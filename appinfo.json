@@ -1,7 +1,7 @@
 {
     "appKeys": {},
     "capabilities": [
-        "configurable"
+        ""
     ],
     "companyName": "redus",
     "longName": "Yet Another Hex Clock",
