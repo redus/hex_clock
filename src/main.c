@@ -1,23 +1,14 @@
 #include <pebble.h>
 
 static Window *s_main_window;
-static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer;
-static GFont s_font, s_battery_font;
+static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer, *s_day_layer;
+static GFont s_font, s_small_font;
 
 
 // battery text
 static void battery_handler(BatteryChargeState charge_state) {
-	static char battery_text[4] = "64";
-
-	/*
-	if (charge_state.is_charging) {
-		snprintf(battery_text, sizeof(battery_text), "charging");
-	} else {
-    	snprintf(battery_text, sizeof(battery_text), "%d%%", charge_state.charge_percent);
- 	}
-	*/
-	
-	snprintf(battery_text, sizeof(battery_text), "%x", charge_state.charge_percent);
+	static char battery_text[4] = "64";	
+	snprintf(battery_text, sizeof(battery_text), "%x%%", charge_state.charge_percent);
   	text_layer_set_text(s_battery_layer, battery_text);
 }
 
@@ -56,34 +47,46 @@ static void itoa(int value, char* str, int base) {
 	// Reverse string
 	strreverse(str,wstr-1);
 }
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 	static char time[16];
 	char hr[4], min[4], sec[4];
-	itoa(tick_time->tm_hour, hr, 16);
+	
+	if (clock_is_24h_style()){
+		itoa(tick_time->tm_hour, hr, 16);
+	} else {
+		itoa(tick_time->tm_hour / 12, hr, 16);
+	}
 	itoa(tick_time->tm_min, min, 16);
 	itoa(tick_time->tm_sec, sec, 16);
 	snprintf(time, sizeof("00:00:00"), "%s:%s:%s", hr, min, sec);
 	text_layer_set_text(s_time_layer, time);
 	
+	// can't divide into two separate tick handlers
 	static char date[16];
 	char day[4], mon[4], year[4];
 	itoa(tick_time->tm_year % 100, year, 16);
 	itoa((tick_time->tm_mon) + 1, mon, 16);
 	itoa(tick_time->tm_mday, day, 16);
+	
 	snprintf(date, sizeof("99.01.01"), "%s|%s|%s", year, mon, day);
 	text_layer_set_text(s_date_layer, date);
+	
+	static char weekday[2];
+	itoa(tick_time->tm_wday, weekday, 16);
+	text_layer_set_text(s_day_layer, weekday);
 }
 
 static void main_window_load(Window *window){
 	window_set_background_color(s_main_window, GColorBlack);
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
-	s_battery_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
+	s_small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
 	
 	// battery layer above date layer
 	s_battery_layer = text_layer_create(GRect(36, 30, 72, 20));
 	text_layer_set_background_color(s_battery_layer, GColorClear);
 	text_layer_set_text_color(s_battery_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
-	text_layer_set_font(s_battery_layer, s_battery_font);
+	text_layer_set_font(s_battery_layer, s_small_font);
 	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
 	battery_handler(battery_state_service_peek());
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
@@ -103,12 +106,21 @@ static void main_window_load(Window *window){
 	text_layer_set_font(s_time_layer, s_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
+	
+	// day layer below time
+	s_day_layer = text_layer_create(GRect(36, 115, 72, 20));
+	text_layer_set_background_color(s_day_layer, GColorClear);
+  	text_layer_set_text_color(s_day_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+	text_layer_set_font(s_day_layer, s_small_font);
+	text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
 }
 
 static void main_window_unload(Window *window){
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_battery_layer);
+	text_layer_destroy(s_day_layer);
 }
 
 static void init(){

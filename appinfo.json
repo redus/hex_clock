@@ -1,7 +1,7 @@
 {
     "appKeys": {},
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "redus",
     "longName": "Yet Another Hex Clock",
@@ -9,15 +9,15 @@
     "resources": {
         "media": [
             {
-                "characterRegex": "[0-9A-F:| ]",
+                "characterRegex": "[0-9A-Fa-f%]",
                 "file": "fonts/Square.ttf",
-                "name": "FONT_SQUARE_34",
+                "name": "FONT_SQUARE_16",
                 "type": "font"
             },
             {
-                "characterRegex": "[0-9A-Fa-f]",
+                "characterRegex": "[0-9A-F:| ]",
                 "file": "fonts/Square.ttf",
-                "name": "FONT_SQUARE_16",
+                "name": "FONT_SQUARE_34",
                 "type": "font"
             }
         ]
@@ -31,6 +31,6 @@
     "uuid": "45fcbf16-538d-4c93-a31e-63142304f37b",
     "versionLabel": "1.0",
     "watchapp": {
-        "watchface": false
+        "watchface": true
     }
 }
