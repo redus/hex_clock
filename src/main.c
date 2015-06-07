@@ -81,11 +81,12 @@ static void main_window_load(Window *window){
 	window_set_background_color(s_main_window, GColorBlack);
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
 	s_small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
+	GColor text_color = COLOR_FALLBACK(GColorGreen, GColorWhite);
 	
 	// battery layer above date layer
 	s_battery_layer = text_layer_create(GRect(36, 30, 72, 20));
 	text_layer_set_background_color(s_battery_layer, GColorClear);
-	text_layer_set_text_color(s_battery_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+	text_layer_set_text_color(s_battery_layer, text_color);
 	text_layer_set_font(s_battery_layer, s_small_font);
 	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
 	battery_handler(battery_state_service_peek());
@@ -94,7 +95,7 @@ static void main_window_load(Window *window){
 	// date layer on top
 	s_date_layer = text_layer_create(GRect(0, 44, 144, 36));
 	text_layer_set_background_color(s_date_layer, GColorClear);
- 	text_layer_set_text_color(s_date_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+ 	text_layer_set_text_color(s_date_layer, text_color);
 	text_layer_set_font(s_date_layer, s_font);
 	text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
@@ -102,7 +103,7 @@ static void main_window_load(Window *window){
 	// time layer on bottom
 	s_time_layer = text_layer_create(GRect(0, 78, 144, 36));
 	text_layer_set_background_color(s_time_layer, GColorClear);
-  	text_layer_set_text_color(s_time_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+  	text_layer_set_text_color(s_time_layer, text_color);
 	text_layer_set_font(s_time_layer, s_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
@@ -110,14 +111,10 @@ static void main_window_load(Window *window){
 	// day layer below time
 	s_day_layer = text_layer_create(GRect(36, 115, 72, 20));
 	text_layer_set_background_color(s_day_layer, GColorClear);
-  	text_layer_set_text_color(s_day_layer, COLOR_FALLBACK(GColorGreen, GColorWhite));
+  	text_layer_set_text_color(s_day_layer, text_color);
 	text_layer_set_font(s_day_layer, s_small_font);
 	text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
-	
-	// load the time 
-	time_t temp = time(NULL);
-  	tick_handler(localtime(&temp), SECOND_UNIT);
 }
 
 static void main_window_unload(Window *window){
