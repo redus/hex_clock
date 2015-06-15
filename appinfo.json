@@ -1,7 +1,16 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "KEY_BATTERY_ON": 3,
+        "KEY_DATE_FORMAT": 0,
+        "KEY_DAY_ZERO": 2,
+        "KEY_MONTH_ZERO": 1,
+        "KEY_PERCENT_SIGN": 4,
+        "KEY_WEEKDAY_NAMED": 6,
+        "KEY_WEEKDAY_ON": 5,
+        "KEY_WEEKDAY_START": 7
+    },
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "redus",
     "longName": "Yet Another Hex Clock",
@@ -9,7 +18,7 @@
     "resources": {
         "media": [
             {
-                "characterRegex": "[0-9A-Fa-f%]",
+                "characterRegex": "[0-9A-Za-f%]",
                 "file": "fonts/Square.ttf",
                 "name": "FONT_SQUARE_16",
                 "type": "font"
