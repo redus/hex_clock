@@ -3,7 +3,7 @@
 static Window *s_main_window;
 static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer, *s_day_layer;
 static GFont s_font, s_small_font;
-static GColor s_color;
+static GColor s_background_color, s_font_color;
 static char *date_format = "yymmdd";
 static int weekday_start = 0;
 static bool day_zero = false,
@@ -11,7 +11,7 @@ static bool day_zero = false,
 	battery_on = true,
 	percent_sign = true, 
 	weekday_on = true,
-	weekday_named = true;
+	weekday_named = false;
 
 const char* WEEKDAY[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
@@ -108,7 +108,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 	
 	if (!weekday_on){ return;}
 	
-	static char weekday[2];
+	static char weekday[4];
 	if (weekday_named){
 		text_layer_set_text(s_day_layer, WEEKDAY[tick_time->tm_wday]);
 	} else {
@@ -118,15 +118,16 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 }
 
 static void main_window_load(Window *window){
-	window_set_background_color(s_main_window, GColorBlack);
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
 	s_small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
-	s_color = COLOR_FALLBACK(GColorGreen, GColorWhite);
+	s_font_color = COLOR_FALLBACK(GColorGreen, GColorWhite);
+	s_background_color = GColorBlack;
+	window_set_background_color(s_main_window, s_background_color);
 	
 	// battery layer above date layer
 	s_battery_layer = text_layer_create(GRect(36, 30, 72, 20));
 	text_layer_set_background_color(s_battery_layer, GColorClear);
-	text_layer_set_text_color(s_battery_layer, s_color);
+	text_layer_set_text_color(s_battery_layer, s_font_color);
 	text_layer_set_font(s_battery_layer, s_small_font);
 	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
 	battery_handler(battery_state_service_peek());
@@ -136,7 +137,7 @@ static void main_window_load(Window *window){
 	// date layer on top
 	s_date_layer = text_layer_create(GRect(0, 44, 144, 36));
 	text_layer_set_background_color(s_date_layer, GColorClear);
- 	text_layer_set_text_color(s_date_layer, s_color);
+ 	text_layer_set_text_color(s_date_layer, s_font_color);
 	text_layer_set_font(s_date_layer, s_font);
 	text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
@@ -144,7 +145,7 @@ static void main_window_load(Window *window){
 	// time layer on bottom
 	s_time_layer = text_layer_create(GRect(0, 78, 144, 36));
 	text_layer_set_background_color(s_time_layer, GColorClear);
-  	text_layer_set_text_color(s_time_layer, s_color);
+  	text_layer_set_text_color(s_time_layer, s_font_color);
 	text_layer_set_font(s_time_layer, s_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
@@ -152,7 +153,7 @@ static void main_window_load(Window *window){
 	// day layer below time
 	s_day_layer = text_layer_create(GRect(36, 115, 72, 20));
 	text_layer_set_background_color(s_day_layer, GColorClear);
-  	text_layer_set_text_color(s_day_layer, s_color);
+  	text_layer_set_text_color(s_day_layer, s_font_color);
 	text_layer_set_font(s_day_layer, s_small_font);
 	text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
@@ -219,7 +220,10 @@ char* app_message_error_text(AppMessageResult reason){
 	return log_message;
 }
 
-
+// convert JS 'True/False' to bool values
+static bool js_bool(char* value){
+	return strcmp(value, "True") == 0;
+}
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 	Tuple *t = dict_read_first(iterator);
 
@@ -230,27 +234,32 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				date_format = t->value->cstring;
 			break;
 			case KEY_MONTH_ZERO:
-				month_zero = (int) t->value->int32;
+				month_zero = js_bool(t->value->cstring);
+				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
 			break;
 			case KEY_DAY_ZERO:
-				day_zero = (int) t->value->int32;
+				day_zero = js_bool(t->value->cstring); 
+				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Day zero: %d", day_zero);
 			break;
 			case KEY_BATTERY_ON:
-				battery_on = (int) t->value->int32;
+				battery_on = js_bool(t->value->cstring); 
 				layer_set_hidden(text_layer_get_layer(s_battery_layer), !battery_on);
 			break;
 			case KEY_PERCENT_SIGN:
-				percent_sign = (int) t->value->int32;
+				percent_sign = js_bool(t->value->cstring); 
+				battery_handler(battery_state_service_peek());
 			break;
 			case KEY_WEEKDAY_ON: 
-				weekday_on = (int) t->value->int32;
+				weekday_on = js_bool(t->value->cstring); 
 				layer_set_hidden(text_layer_get_layer(s_day_layer), !weekday_on);
 			break;
 			case KEY_WEEKDAY_NAMED:
-				weekday_named = (int) t->value->int32;
+				// APP_LOG(APP_LOG_LEVEL_DEBUG, "named value %s", t->value->cstring);
+				weekday_named = js_bool(t->value->cstring); 
 			break;
 			case KEY_WEEKDAY_START:
-				weekday_start = (int) t->value->int32;
+				weekday_start = t->value->int8;
+				// APP_LOG(APP_LOG_LEVEL_DEBUG, "weekday start %d", weekday_start);
 			break;
 			default:
 				APP_LOG(APP_LOG_LEVEL_ERROR, "Unrecognized key %d with value %s",

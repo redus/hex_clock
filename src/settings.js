@@ -1,44 +1,78 @@
-
-Pebble.addEventListener('showConfiguration', function(e) {
-	// comment out until it works
-	/*
-	var watch = Pebble.getActiveWatchInfo();
-	if (watch && watch.platform == 'basalt'){
-		Pebble.openURL('http://www-personal.umich.edu/~jinmoy/yahc/aplite.html');
-	} else {
-		Pebble.openURL('http://www-personal.umich.edu/~jinmoy/yahc/basalt.html');
-	}
-	*/
-	Pebble.openURL('http://www-personal.umich.edu/~jinmoy/yahc/aplite.html');
-});
-
 var data_success = function(e) {
-    console.log('Successfully sent settings');
+	console.log('Successfully set settings.');
 };
 
 var data_error = function(e) {
     console.log('Failed to send settings to Pebble. ' + e.error);
 };
 
+var send_settings = function() {
+	Pebble.sendAppMessage(
+			{"KEY_DATE_FORMAT": localStorage.getItem("KEY_DATE_FORMAT"),
+			"KEY_MONTH_ZERO": localStorage.getItem("KEY_MONTH_ZERO"),
+			"KEY_DAY_ZERO": localStorage.getItem("KEY_DAY_ZERO"),
+			"KEY_BATTERY_ON": localStorage.getItem("KEY_BATTERY_ON"),
+			"KEY_PERCENT_SIGN": localStorage.getItem("KEY_PERCENT_SIGN"),
+			"KEY_WEEKDAY_ON": localStorage.getItem("KEY_WEEKDAY_ON"),
+			"KEY_WEEKDAY_NAMED": localStorage.getItem("KEY_WEEKDAY_NAMED"),
+			"KEY_WEEKDAY_START": parseInt(localStorage.getItem("KEY_WEEKDAY_START"))},
+			data_success, data_error
+		);
+};
+
+Pebble.addEventListener ('ready',function(e){
+	console.log('Loading previous settings. (if any)');
+	send_settings();
+});
+
+Pebble.addEventListener('showConfiguration', function(e) {
+	var url = 'http://www-personal.umich.edu/~jinmoy/yahc/aplite.html';
+	// comment out until it works
+	/*
+	var watch = Pebble.getActiveWatchInfo();
+	if (watch && watch.platform == 'basalt'){
+		url = 'http://www-personal.umich.edu/~jinmoy/yahc/basalt.html';
+	}
+	*/
+	
+	var settings = {'date_format': localStorage.getItem("KEY_DATE_FORMAT"),
+					'month_zero': localStorage.getItem("KEY_MONTH_ZERO"),
+					'day_zero': localStorage.getItem("KEY_DAY_ZERO"),
+					'battery_on': localStorage.getItem("KEY_BATTERY_ON"),
+					'percent_sign': localStorage.getItem("KEY_PERCENT_SIGN"),
+					'weekday_on': localStorage.getItem("KEY_WEEKDAY_ON"),
+					'weekday_named': localStorage.getItem("KEY_WEEKDAY_NAMED"),
+					'weekday_start': localStorage.getItem("KEY_WEEKDAY_START")};
+	
+	var prefix = '?';
+	for (var option in settings) {
+		// check the option is not null
+		if (settings.hasOwnProperty(option) && settings[option]) {
+			url += prefix.concat(option, '=', settings[option]);
+		}
+		prefix = '&';
+	}
+	Pebble.openURL(url);
+});
+
 Pebble.addEventListener("webviewclosed",
-  function(e) {
-	if (!e.response){ return; }    
-    //Get JSON dictionary
-    var configuration = JSON.parse(decodeURIComponent(e.response));
-    console.log("Configuration window returned: " + JSON.stringify(configuration));
+	function(e) {
+		if (!e.response){ return; }    
+		//Get JSON dictionary
+		var configuration = JSON.parse(decodeURIComponent(e.response));
+		console.log("Configuration window returned: " + JSON.stringify(configuration));
  
-    Pebble.sendAppMessage(
-		{"KEY_DATE_FORMAT": configuration.date_format,
-		"KEY_MONTH_ZERO": configuration.month_zero,
-		"KEY_DAY_ZERO": configuration.day_zero,
-		"KEY_BATTERY_ON": configuration.battery_on,
-		"KEY_PERCENT_SIGN": configuration.percent_sign,
-		"KEY_WEEKDAY_ON": configuration.weekday_on,
-		"KEY_WEEKDAY_NAMED": configuration.named,
-		"KEY_WEEKDAY_START": configuration.weekday_start},
-      data_success, data_error
-    );
-  }
+		// store settings to local storage
+		localStorage.setItem("KEY_DATE_FORMAT", configuration.date_format);
+		localStorage.setItem("KEY_MONTH_ZERO", configuration.month_zero);
+		localStorage.setItem("KEY_DAY_ZERO", configuration.day_zero);
+		localStorage.setItem("KEY_BATTERY_ON", configuration.battery_on);
+		localStorage.setItem("KEY_PERCENT_SIGN", configuration.percent_sign);
+		localStorage.setItem("KEY_WEEKDAY_ON", configuration.weekday_on);
+		localStorage.setItem("KEY_WEEKDAY_NAMED", configuration.weekday_named);
+		localStorage.setItem("KEY_WEEKDAY_START", configuration.weekday_start);
+		send_settings();
+	}
 );
 
 
