@@ -2,8 +2,8 @@
 
 static Window *s_main_window;
 static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer, *s_day_layer;
-static GFont s_font, s_small_font;
 static GColor s_background_color, s_font_color;
+static GFont s_font, s_small_font;
 static char *date_format = "yymmdd";
 static int weekday_start = 0;
 static bool day_zero = false,
@@ -11,11 +11,13 @@ static bool day_zero = false,
 	battery_on = true,
 	percent_sign = true, 
 	weekday_on = true,
-	weekday_named = false;
+	weekday_named = false, 
+	default_color = true;
 
 const char* WEEKDAY[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
-			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START};
+			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
+			  KEY_COLOR_FONT, KEY_COLOR_BACKGROUND};
 
 // REQ: battery_on is true
 // battery text
@@ -120,8 +122,6 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 static void main_window_load(Window *window){
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
 	s_small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
-	s_font_color = COLOR_FALLBACK(GColorGreen, GColorWhite);
-	s_background_color = GColorBlack;
 	window_set_background_color(s_main_window, s_background_color);
 	
 	// battery layer above date layer
@@ -224,6 +224,34 @@ char* app_message_error_text(AppMessageResult reason){
 static bool js_bool(char* value){
 	return strcmp(value, "True") == 0;
 }
+
+static GColor set_color(char* value){
+	// default to black
+	if (strcmp(value, "w") == 0){
+		return GColorWhite;
+	} else if (strcmp(value, "g") == 0){
+		return COLOR_FALLBACK(GColorGreen, GColorWhite);
+	} else if (strcmp(value, "bl") == 0){
+		return COLOR_FALLBACK(GColorCobaltBlue, GColorBlack);
+	} else if (strcmp(value, "p") == 0){
+		return COLOR_FALLBACK(GColorImperialPurple, GColorBlack);
+	} else {
+		return GColorBlack;
+	}
+}
+static void set_background_color(char* value){
+	s_background_color = set_color(value);
+	window_set_background_color(s_main_window, s_background_color);
+}
+
+static void set_font_color(char* value){
+	s_font_color = set_color(value);
+	text_layer_set_text_color(s_date_layer, s_font_color);
+	text_layer_set_text_color(s_time_layer, s_font_color);
+	text_layer_set_text_color(s_battery_layer, s_font_color);
+	text_layer_set_text_color(s_day_layer, s_font_color);
+}
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 	Tuple *t = dict_read_first(iterator);
 
@@ -261,6 +289,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				weekday_start = t->value->int8;
 				// APP_LOG(APP_LOG_LEVEL_DEBUG, "weekday start %d", weekday_start);
 			break;
+			case KEY_COLOR_BACKGROUND:
+				set_background_color(t->value->cstring);
+				default_color = false;
+			break;
+			case KEY_COLOR_FONT:
+				set_font_color(t->value->cstring);
+				default_color = false;
+			break;
 			default:
 				APP_LOG(APP_LOG_LEVEL_ERROR, "Unrecognized key %d with value %s",
 						(int) t->key, t->value->cstring);
@@ -278,6 +314,10 @@ static void init(){
 	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 	battery_state_service_subscribe(battery_handler);
 	s_main_window = window_create();
+	if (default_color){
+		s_background_color = GColorBlack; 
+		s_font_color = COLOR_FALLBACK(GColorGreen, GColorWhite); 
+	}
 	window_set_window_handlers(s_main_window, (WindowHandlers){
 		.load = main_window_load,
 		.unload = main_window_unload

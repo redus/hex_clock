@@ -15,7 +15,9 @@ var send_settings = function() {
 			"KEY_PERCENT_SIGN": localStorage.getItem("KEY_PERCENT_SIGN"),
 			"KEY_WEEKDAY_ON": localStorage.getItem("KEY_WEEKDAY_ON"),
 			"KEY_WEEKDAY_NAMED": localStorage.getItem("KEY_WEEKDAY_NAMED"),
-			"KEY_WEEKDAY_START": parseInt(localStorage.getItem("KEY_WEEKDAY_START"))},
+			"KEY_WEEKDAY_START": parseInt(localStorage.getItem("KEY_WEEKDAY_START")),
+			"KEY_COLOR_FONT": localStorage.getItem("KEY_COLOR_FONT"),
+			"KEY_COLOR_BACKGROUND": localStorage.getItem("KEY_COLOR_BACKGROUND")},
 			data_success, data_error
 		);
 };
@@ -43,6 +45,11 @@ Pebble.addEventListener('showConfiguration', function(e) {
 					'weekday_on': localStorage.getItem("KEY_WEEKDAY_ON"),
 					'weekday_named': localStorage.getItem("KEY_WEEKDAY_NAMED"),
 					'weekday_start': localStorage.getItem("KEY_WEEKDAY_START")};
+					
+	if (localStorage.getItem("KEY_COLOR_FONT")){
+		settings['color_scheme'] = localStorage.getItem("KEY_COLOR_FONT") +
+			'/'	+ localStorage.getItem("KEY_COLOR_BACKGROUND");
+	}
 	
 	var prefix = '?';
 	for (var option in settings) {
@@ -62,6 +69,8 @@ Pebble.addEventListener("webviewclosed",
 		var configuration = JSON.parse(decodeURIComponent(e.response));
 		console.log("Configuration window returned: " + JSON.stringify(configuration));
  
+		var color_pair = configuration.color_scheme.split('/');
+		
 		// store settings to local storage
 		localStorage.setItem("KEY_DATE_FORMAT", configuration.date_format);
 		localStorage.setItem("KEY_MONTH_ZERO", configuration.month_zero);
@@ -71,6 +80,8 @@ Pebble.addEventListener("webviewclosed",
 		localStorage.setItem("KEY_WEEKDAY_ON", configuration.weekday_on);
 		localStorage.setItem("KEY_WEEKDAY_NAMED", configuration.weekday_named);
 		localStorage.setItem("KEY_WEEKDAY_START", configuration.weekday_start);
+		localStorage.setItem("KEY_COLOR_FONT", color_pair[0]);
+		localStorage.setItem("KEY_COLOR_BACKGROUND", color_pair[1]);
 		send_settings();
 	}
 );
