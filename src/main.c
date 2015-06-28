@@ -7,13 +7,15 @@ static GColor s_background_color, s_font_color;
 static GFont s_font, s_small_font;
 static char *date_format = "yymmdd", *locale = "EN";
 static int weekday_start = 0;
-static bool day_zero = false,
-	month_zero = false,
-	battery_on = true,
-	percent_sign = true, 
-	weekday_on = true,
-	weekday_named = false, 
-	default_color = true;
+// flags used as int instaed of bool
+// because there is no direct translation from js value to c value.
+static int day_zero = 0,
+	month_zero = 0,
+	battery_on = 1,
+	percent_sign = 1,
+	weekday_on = 1,
+	weekday_named = 0;
+static bool	default_color = true;
 
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
 			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
@@ -262,28 +264,28 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				date_format = t->value->cstring;
 			break;
 			case KEY_MONTH_ZERO:
-				month_zero = js_bool(t->value->cstring);
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
+				month_zero = t->value->int8;
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
 			break;
 			case KEY_DAY_ZERO:
-				day_zero = js_bool(t->value->cstring); 
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Day zero: %d", day_zero);
+				day_zero = t->value->int8; 
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "Day zero: %d", day_zero);
 			break;
 			case KEY_BATTERY_ON:
-				battery_on = js_bool(t->value->cstring); 
+				battery_on = t->value->int8; 
 				layer_set_hidden(text_layer_get_layer(s_battery_layer), !battery_on);
 			break;
 			case KEY_PERCENT_SIGN:
-				percent_sign = js_bool(t->value->cstring); 
+				percent_sign = t->value->int8; 
 				battery_handler(battery_state_service_peek());
 			break;
 			case KEY_WEEKDAY_ON: 
-				weekday_on = js_bool(t->value->cstring); 
+				weekday_on = t->value->int8; 
 				layer_set_hidden(text_layer_get_layer(s_day_layer), !weekday_on);
 			break;
 			case KEY_WEEKDAY_NAMED:
 				// APP_LOG(APP_LOG_LEVEL_DEBUG, "named value %s", t->value->cstring);
-				weekday_named = js_bool(t->value->cstring); 
+				weekday_named = t->value->int8; 
 			break;
 			case KEY_WEEKDAY_START:
 				weekday_start = t->value->int8;
