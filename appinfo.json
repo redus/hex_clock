@@ -1,12 +1,13 @@
 {
     "appKeys": {
         "KEY_BATTERY_ON": 3,
-        "KEY_COLOR_BACKGROUND": 9,
-        "KEY_COLOR_FONT": 8,
+        "KEY_COLOR_BACKGROUND": 10,
+        "KEY_COLOR_FONT": 9,
         "KEY_DATE_FORMAT": 0,
         "KEY_DAY_ZERO": 2,
         "KEY_MONTH_ZERO": 1,
         "KEY_PERCENT_SIGN": 4,
+        "KEY_WEEKDAY_LANG": 8,
         "KEY_WEEKDAY_NAMED": 6,
         "KEY_WEEKDAY_ON": 5,
         "KEY_WEEKDAY_START": 7
@@ -20,7 +21,7 @@
     "resources": {
         "media": [
             {
-                "characterRegex": "[0-9A-Za-f%]",
+                "characterRegex": "[0-9A-Z\u00c7\u00c1\u00c5\u00c9\u00d8\u00d6\u00daa-f%]",
                 "file": "fonts/Square.ttf",
                 "name": "FONT_SQUARE_16",
                 "type": "font"

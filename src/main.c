@@ -1,10 +1,11 @@
 #include <pebble.h>
+#include <translate.h>
 
 static Window *s_main_window;
 static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer, *s_day_layer;
 static GColor s_background_color, s_font_color;
 static GFont s_font, s_small_font;
-static char *date_format = "yymmdd";
+static char *date_format = "yymmdd", *locale = "EN";
 static int weekday_start = 0;
 static bool day_zero = false,
 	month_zero = false,
@@ -14,10 +15,9 @@ static bool day_zero = false,
 	weekday_named = false, 
 	default_color = true;
 
-const char* WEEKDAY[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
 			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
-			  KEY_COLOR_FONT, KEY_COLOR_BACKGROUND};
+			  KEY_WEEKDAY_LANG, KEY_COLOR_FONT, KEY_COLOR_BACKGROUND};
 
 // REQ: battery_on is true
 // battery text
@@ -112,7 +112,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 	
 	static char weekday[4];
 	if (weekday_named){
-		text_layer_set_text(s_day_layer, WEEKDAY[tick_time->tm_wday]);
+		text_layer_set_text(s_day_layer, get_weekday(tick_time->tm_wday, locale));
 	} else {
 		itoa((tick_time->tm_wday - weekday_start + 7) % 7, weekday, 16);
 		text_layer_set_text(s_day_layer, weekday);
@@ -288,6 +288,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 			case KEY_WEEKDAY_START:
 				weekday_start = t->value->int8;
 				// APP_LOG(APP_LOG_LEVEL_DEBUG, "weekday start %d", weekday_start);
+			break;
+			case KEY_WEEKDAY_LANG:
+				locale = t->value->cstring;
+				set_locale(locale);
 			break;
 			case KEY_COLOR_BACKGROUND:
 				set_background_color(t->value->cstring);
