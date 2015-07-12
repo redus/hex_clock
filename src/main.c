@@ -5,7 +5,8 @@ static Window *s_main_window;
 static TextLayer *s_date_layer, *s_time_layer, *s_battery_layer, *s_day_layer;
 static GColor s_background_color, s_font_color;
 static GFont s_font, s_small_font;
-static char *date_format = "yymmdd", *locale = "EN";
+static char *date_format = "yymmdd";
+static Locale locale;
 static int weekday_start = 0;
 // flags used as int instaed of bool
 // because translating js bool from appmessage to c value is hassle.
@@ -61,9 +62,14 @@ static void load_settings(){
 	if (persist_exists(KEY_WEEKDAY_START)){
 		weekday_start = persist_read_int(KEY_WEEKDAY_START);
 	}
+	
 	if (persist_exists(KEY_WEEKDAY_LANG)){
-		persist_read_string(KEY_WEEKDAY_LANG, locale, sizeof("EN"));
-		set_locale(locale);
+		char* temp = "";
+		persist_read_string(KEY_WEEKDAY_LANG, temp, sizeof("ENF"));
+		locale = set_locale(temp);
+		// APP_LOG(APP_LOG_LEVEL_DEBUG, "what is the locale: %s", locale);
+	} else {
+		locale = set_locale("EN");
 	}
 	if (persist_exists(KEY_COLOR_FONT)){
 		char* temp = "";
@@ -345,9 +351,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				// APP_LOG(APP_LOG_LEVEL_DEBUG, "weekday start %d", weekday_start);
 			break;
 			case KEY_WEEKDAY_LANG:
-				locale = t->value->cstring;
-				persist_write_string(KEY_WEEKDAY_LANG, locale);
-				set_locale(locale);
+				locale = set_locale(t->value->cstring);
+				persist_write_string(KEY_WEEKDAY_LANG, t->value->cstring);
 			break;
 			case KEY_COLOR_BACKGROUND:
 				persist_write_string(KEY_COLOR_BACKGROUND, t->value->cstring);

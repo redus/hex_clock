@@ -1,10 +1,6 @@
 #include <pebble.h>
 #include "translate.h"
 
-typedef enum {CA, CZ, DA, DE, EN, ES, FI, FIL, FR, HR, HU, ID, IT, LT, LV, 
-	NL, NO, PO, PT, RO, SK, SL, SV, TR, VI}
-	Locale;
-
 static const char* WEEKDAY[26][7] = 
 	{{"DG", "DL", "DT", "DC", "DJ", "DV", "DS"},
 	{"NE", "PO", "ÚT", "ST", "ÇT", "PÁ", "SO"},
@@ -31,8 +27,7 @@ static const char* WEEKDAY[26][7] =
 	{"SÖN", "MÅN", "TIS", "ONS", "TOR", "FRE", "LÖR"},
 	{"PAZ", "PZT", "SAL", "ÇAR", "PER", "CUM", "CMT"},
 	{"CN", "TH2", "TH3", "TH4", "TH5", "TH6", "TH7"}};
-static Locale saved_locale;
-static bool is_locale_set = false;
+
 /*
 const char* WEEKDAY_KO[7] = {"일", "월", "화", "수", "목", "금", "토"};
 const char* WEEKDAY_JP[7] = {"日", "月", "火", "水", "木", "金", "土"};
@@ -41,68 +36,64 @@ const char* WEEKDAY_ZH[7] = {"星期天", "星期一", "星期二", "星期三",
 	"星期六"}; 
 */
 
-void set_locale(const char* locale){
+Locale set_locale(const char* locale){
 	if (strcmp(locale, "EN") == 0){
-		saved_locale = EN;
+		return EN;
 	} else if (strcmp(locale, "ES") == 0){
-		saved_locale = ES;
+		return ES;
 	} else if (strcmp(locale, "DE") == 0){
-		saved_locale = DE;
+		return DE;
 	} else if (strcmp(locale, "FR") == 0){
-		saved_locale = FR;
+		return FR;
 	} else if (strcmp(locale, "CA") == 0){
-		saved_locale = CA;
+		return CA;
 	} else if (strcmp(locale, "CZ") == 0){
-		saved_locale = CZ;
+		return CZ;
 	} else if (strcmp(locale, "DA") == 0){
-		saved_locale = DA;
+		return DA;
 	} else if (strcmp(locale, "FI") == 0){
-		saved_locale = FI;
+		return FI;
 	} else if (strcmp(locale, "FIL") == 0){
-		saved_locale = FIL;
+		return FIL;
 	} else if (strcmp(locale, "FR") == 0){
-		saved_locale = FR;
+		return FR;
 	} else if (strcmp(locale, "HR") == 0){
-		saved_locale = HR;
+		return HR;
 	} else if (strcmp(locale, "HU") == 0){
-		saved_locale = HU;
+		return HU;
 	} else if (strcmp(locale, "ID") == 0){
-		saved_locale = ID;
+		return ID;
 	} else if (strcmp(locale, "IT") == 0){
-		saved_locale = IT;
+		return IT;
 	} else if (strcmp(locale, "LT") == 0){
-		saved_locale = LT;
+		return LT;
 	} else if (strcmp(locale, "LV") == 0){
-		saved_locale = LV;
+		return LV;
 	} else if (strcmp(locale, "NL") == 0){
-		saved_locale = NL;
+		return NL;
 	} else if (strcmp(locale, "NO") == 0){
-		saved_locale = NO;
+		return NO;
 	} else if (strcmp(locale, "PO") == 0){
-		saved_locale = PO;
+		return PO;
 	} else if (strcmp(locale, "PT") == 0){
-		saved_locale = PT;
+		return PT;
 	} else if (strcmp(locale, "RO") == 0){
-		saved_locale = RO;
+		return RO;
 	} else if (strcmp(locale, "SK") == 0){
-		saved_locale = SK;
+		return SK;
 	} else if (strcmp(locale, "SL") == 0){
-		saved_locale = SL;
+		return SL;
 	} else if (strcmp(locale, "SV") == 0){
-		saved_locale = SV;
+		return SV;
 	} else if (strcmp(locale, "TR") == 0){
-		saved_locale = TR;
+		return TR;
 	} else if (strcmp(locale, "VI") == 0){
-		saved_locale = VI;
+		return VI;
 	} else {
-		saved_locale = EN;
+		return EN;
+		// APP_LOG(APP_LOG_LEVEL_DEBUG, "why fall here: %s,", locale);
 	}
-	is_locale_set = true;
 }
-const char* get_weekday(int day_number, const char* locale){
-	if (!is_locale_set){
-		set_locale(locale);
-		is_locale_set = true;
-	}
-	return WEEKDAY[saved_locale][day_number];
+const char* get_weekday(int day_number, const Locale locale){
+	return WEEKDAY[locale][day_number];
 }
