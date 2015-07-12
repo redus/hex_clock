@@ -24,8 +24,7 @@ var send_settings = function() {
 };
 
 Pebble.addEventListener ('ready',function(e){
-	console.log('Loading previous settings. (if any)');
-	send_settings();
+	console.log('PebbleKit JS Ready');
 });
 
 Pebble.addEventListener('showConfiguration', function(e) {
