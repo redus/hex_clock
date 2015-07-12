@@ -41,25 +41,25 @@ static void load_settings(){
 		persist_read_string(KEY_DATE_FORMAT, date_format, sizeof("yymmdd"));
 	} 
 	if (persist_exists(KEY_MONTH_ZERO)){
-		persist_read_int(KEY_MONTH_ZERO);
+		month_zero = persist_read_int(KEY_MONTH_ZERO);
 	} 
 	if (persist_exists(KEY_DAY_ZERO)){
-		persist_read_int(KEY_DAY_ZERO);
+		day_zero = persist_read_int(KEY_DAY_ZERO);
 	}
 	if (persist_exists(KEY_BATTERY_ON)){
-		persist_read_int(KEY_BATTERY_ON);
+		battery_on = persist_read_int(KEY_BATTERY_ON);
 	} 
 	if (persist_exists(KEY_PERCENT_SIGN)){
-		persist_read_int(KEY_PERCENT_SIGN);
+		percent_sign = persist_read_int(KEY_PERCENT_SIGN);
 	}
 	if (persist_exists(KEY_WEEKDAY_ON)){
-		persist_read_int(KEY_WEEKDAY_ON);
+		weekday_on = persist_read_int(KEY_WEEKDAY_ON);
 	} 
 	if (persist_exists(KEY_WEEKDAY_NAMED)){
-		persist_read_int(KEY_WEEKDAY_NAMED);
+		weekday_named = persist_read_int(KEY_WEEKDAY_NAMED);
 	}
 	if (persist_exists(KEY_WEEKDAY_START)){
-		persist_read_int(KEY_WEEKDAY_START);
+		weekday_start = persist_read_int(KEY_WEEKDAY_START);
 	}
 	if (persist_exists(KEY_WEEKDAY_LANG)){
 		persist_read_string(KEY_WEEKDAY_LANG, locale, sizeof("EN"));
