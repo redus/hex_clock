@@ -1,3 +1,5 @@
+
+#define DELETE_SETTINGS 666
 #include <pebble.h>
 #include <translate.h>
 
@@ -20,6 +22,7 @@ static int day_zero = 0,
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
 			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
 			  KEY_WEEKDAY_LANG, KEY_COLOR_FONT, KEY_COLOR_BACKGROUND};
+const int SETTINGS_SIZE = 11;
 
 static GColor set_color(char* value){
 	// default to black
@@ -300,6 +303,12 @@ static void refresh_font_color(char* value){
 	text_layer_set_text_color(s_day_layer, s_font_color);
 }
 
+static void persist_clear(){
+	for (int i = 0; i < SETTINGS_SIZE; ++i){
+		persist_delete(i);
+	}
+}
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 	Tuple *t = dict_read_first(iterator);
 
@@ -357,6 +366,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				persist_write_string(KEY_COLOR_FONT, t->value->cstring);
 				refresh_font_color(t->value->cstring);
 			break;
+			case DELETE_SETTINGS:
+				persist_clear();
+			break;				
 			default:
 				APP_LOG(APP_LOG_LEVEL_ERROR, "Unrecognized key %d with value %s",
 						(int) t->key, t->value->cstring);

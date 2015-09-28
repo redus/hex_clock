@@ -1,5 +1,6 @@
 {
     "appKeys": {
+        "DELETE_SETTINGS": 666,
         "KEY_BATTERY_ON": 3,
         "KEY_COLOR_BACKGROUND": 10,
         "KEY_COLOR_FONT": 9,

@@ -1,3 +1,6 @@
+// local storage populates the settings web view
+// the persitent storage saves the watch hardware's view setting
+
 var data_success = function(e) {
 	console.log('Successfully set settings.');
 };
@@ -21,6 +24,12 @@ var send_settings = function() {
 			"KEY_COLOR_BACKGROUND": localStorage.getItem("KEY_COLOR_BACKGROUND")},
 			data_success, data_error
 		);
+};
+
+var delete_settings = function() {
+	Pebble.sendAppMessage(
+		{"DELETE_SETTINGS": true}, data_success, data_error
+	);
 };
 
 Pebble.addEventListener ('ready',function(e){
@@ -70,21 +79,27 @@ Pebble.addEventListener("webviewclosed",
 		var configuration = JSON.parse(decodeURIComponent(e.response));
 		console.log("Configuration window returned: " + JSON.stringify(configuration));
  
-		var color_pair = configuration.color_scheme.split('/');
+		if (configuration.delete_settings){
+			localStorage.clear();
+			console.log('Cleared the localStorage');
+			delete_settings();
+		} else {
+			var color_pair = configuration.color_scheme.split('/');
+			// store settings to local storage
+			localStorage.setItem("KEY_DATE_FORMAT", configuration.date_format);
+			localStorage.setItem("KEY_MONTH_ZERO", configuration.month_zero);
+			localStorage.setItem("KEY_DAY_ZERO", configuration.day_zero);
+			localStorage.setItem("KEY_BATTERY_ON", configuration.battery_on);
+			localStorage.setItem("KEY_PERCENT_SIGN", configuration.percent_sign);
+			localStorage.setItem("KEY_WEEKDAY_ON", configuration.weekday_on);
+			localStorage.setItem("KEY_WEEKDAY_NAMED", configuration.weekday_named);
+			localStorage.setItem("KEY_WEEKDAY_START", configuration.weekday_start);
+			localStorage.setItem("KEY_WEEKDAY_LANG", configuration.weekday_lang);
+			localStorage.setItem("KEY_COLOR_FONT", color_pair[0]);
+			localStorage.setItem("KEY_COLOR_BACKGROUND", color_pair[1]);
+			send_settings();
+		}
 		
-		// store settings to local storage
-		localStorage.setItem("KEY_DATE_FORMAT", configuration.date_format);
-		localStorage.setItem("KEY_MONTH_ZERO", configuration.month_zero);
-		localStorage.setItem("KEY_DAY_ZERO", configuration.day_zero);
-		localStorage.setItem("KEY_BATTERY_ON", configuration.battery_on);
-		localStorage.setItem("KEY_PERCENT_SIGN", configuration.percent_sign);
-		localStorage.setItem("KEY_WEEKDAY_ON", configuration.weekday_on);
-		localStorage.setItem("KEY_WEEKDAY_NAMED", configuration.weekday_named);
-		localStorage.setItem("KEY_WEEKDAY_START", configuration.weekday_start);
-		localStorage.setItem("KEY_WEEKDAY_LANG", configuration.weekday_lang);
-		localStorage.setItem("KEY_COLOR_FONT", color_pair[0]);
-		localStorage.setItem("KEY_COLOR_BACKGROUND", color_pair[1]);
-		send_settings();
 	}
 );
 
