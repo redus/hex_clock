@@ -1,7 +1,7 @@
 #pragma once
 
-typedef enum {CA, CZ, DA, DE, EN, ES, FI, FIL, FR, HR, HU, ID, IT, LT, LV, 
-				  NL, NO, PO, PT, RO, SK, SL, SV, TR, VI}
+typedef enum {CA, CZ, DA, DE, EN, ES, FI, FIL, FR, HR, HU, ID, IT, JP, KR, 
+			  LT, LV, NL, NO, PO, PT, RO, SK, SL, SV, TR, VI, ZH}
 			Locale;
 
 // REQ: day_number counts from Sunday (0 == Sun, 1 == Mon, etc.)

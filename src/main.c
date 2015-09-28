@@ -287,11 +287,6 @@ char* app_message_error_text(AppMessageResult reason){
 	return log_message;
 }
 
-// convert JS 'True/False' to bool values
-static bool js_bool(char* value){
-	return strcmp(value, "True") == 0;
-}
-
 static void refresh_background_color(char* value){
 	s_background_color = set_color(value);
 	window_set_background_color(s_main_window, s_background_color);
