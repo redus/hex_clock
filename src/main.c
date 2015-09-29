@@ -9,20 +9,34 @@ static GColor s_background_color, s_font_color;
 static GFont s_font, s_small_font;
 static char *date_format = "yymmdd";
 static Locale locale;
+
 static int weekday_start = 0;
-// flags used as int instaed of bool
-// because translating js bool from appmessage to c value is hassle.
 static int day_zero = 0,
 	month_zero = 0,
 	battery_on = 1,
 	percent_sign = 1,
 	weekday_on = 1,
 	weekday_named = 0;
+static int* flags[] = {&month_zero, &day_zero, &battery_on, &percent_sign, &weekday_on,
+					  &weekday_named, &weekday_start};
+static const int DEFAULT_FLAGS[] = {0, 0, 1, 1, 1, 0, 0};
 
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
 			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
 			  KEY_WEEKDAY_LANG, KEY_COLOR_FONT, KEY_COLOR_BACKGROUND};
 const int SETTINGS_SIZE = 11;
+
+
+static void battery_handler(BatteryChargeState charge_state) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "battery on %d, persist %d", battery_on, (int) persist_read_int(KEY_BATTERY_ON));
+	static char battery_text[4] = "64";
+	if (percent_sign){
+		snprintf(battery_text, sizeof(battery_text), "%x%%", charge_state.charge_percent);
+	} else {
+		snprintf(battery_text, sizeof(battery_text), "%x", charge_state.charge_percent);
+	}
+  	text_layer_set_text(s_battery_layer, battery_text);
+}
 
 static GColor set_color(char* value){
 	// default to black
@@ -43,27 +57,15 @@ static GColor set_color(char* value){
 static void load_settings(){
 	if (persist_exists(KEY_DATE_FORMAT)){
 		persist_read_string(KEY_DATE_FORMAT, date_format, sizeof("yymmdd"));
-	} 
-	if (persist_exists(KEY_MONTH_ZERO)){
-		month_zero = persist_read_int(KEY_MONTH_ZERO);
-	} 
-	if (persist_exists(KEY_DAY_ZERO)){
-		day_zero = persist_read_int(KEY_DAY_ZERO);
+	} else {
+		snprintf(date_format, sizeof(date_format), "yymmdd");
 	}
-	if (persist_exists(KEY_BATTERY_ON)){
-		battery_on = persist_read_int(KEY_BATTERY_ON);
-	} 
-	if (persist_exists(KEY_PERCENT_SIGN)){
-		percent_sign = persist_read_int(KEY_PERCENT_SIGN);
-	}
-	if (persist_exists(KEY_WEEKDAY_ON)){
-		weekday_on = persist_read_int(KEY_WEEKDAY_ON);
-	} 
-	if (persist_exists(KEY_WEEKDAY_NAMED)){
-		weekday_named = persist_read_int(KEY_WEEKDAY_NAMED);
-	}
-	if (persist_exists(KEY_WEEKDAY_START)){
-		weekday_start = persist_read_int(KEY_WEEKDAY_START);
+	for (int i = KEY_MONTH_ZERO; i <= KEY_WEEKDAY_START; ++i){
+		if (persist_exists(i)){
+			**(flags + i - KEY_MONTH_ZERO) = persist_read_int(i);
+		} else {
+			**(flags + i - KEY_MONTH_ZERO) = DEFAULT_FLAGS[i];
+		}
 	}
 	
 	if (persist_exists(KEY_WEEKDAY_LANG)){
@@ -88,18 +90,6 @@ static void load_settings(){
 	} else {
 		s_background_color = set_color("b");
 	}
-}
-
-// REQ: battery_on is true
-// battery text
-static void battery_handler(BatteryChargeState charge_state) {
-	static char battery_text[4] = "64";
-	if (percent_sign){
-		snprintf(battery_text, sizeof(battery_text), "%x%%", charge_state.charge_percent);
-	} else {
-		snprintf(battery_text, sizeof(battery_text), "%x", charge_state.charge_percent);
-	}
-  	text_layer_set_text(s_battery_layer, battery_text);
 }
 
 /**
@@ -189,46 +179,63 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 	}
 }
 
-static void main_window_load(Window *window){
+void set_font(){
 	s_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_34));
 	s_small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_SQUARE_16));
-	window_set_background_color(s_main_window, s_background_color);
 	
+	text_layer_set_font(s_battery_layer, s_small_font);
+	text_layer_set_font(s_date_layer, s_font);
+	text_layer_set_font(s_time_layer, s_font);
+	text_layer_set_font(s_day_layer, s_small_font);
+}
+
+static void refresh_background_color(){
+	window_set_background_color(s_main_window, s_background_color);
+}
+
+static void refresh_font_color(){
+	text_layer_set_text_color(s_date_layer, s_font_color);
+	text_layer_set_text_color(s_time_layer, s_font_color);
+	text_layer_set_text_color(s_battery_layer, s_font_color);
+	text_layer_set_text_color(s_day_layer, s_font_color);
+}
+
+// refresh window view elements
+static void refresh_window(){
+	battery_handler(battery_state_service_peek());
+	layer_set_hidden(text_layer_get_layer(s_battery_layer), !battery_on);
+	layer_set_hidden(text_layer_get_layer(s_day_layer), !weekday_on);
+	refresh_background_color();
+	refresh_font_color();
+}
+
+static void main_window_load(Window *window){
 	// battery layer above date layer
 	s_battery_layer = text_layer_create(GRect(36, 30, 72, 20));
 	text_layer_set_background_color(s_battery_layer, GColorClear);
-	text_layer_set_text_color(s_battery_layer, s_font_color);
-	text_layer_set_font(s_battery_layer, s_small_font);
 	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
-	battery_handler(battery_state_service_peek());
-	layer_set_hidden(text_layer_get_layer(s_battery_layer), !battery_on);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
 	
 	// date layer on top
 	s_date_layer = text_layer_create(GRect(0, 44, 144, 36));
 	text_layer_set_background_color(s_date_layer, GColorClear);
- 	text_layer_set_text_color(s_date_layer, s_font_color);
-	text_layer_set_font(s_date_layer, s_font);
 	text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
 	
 	// time layer on bottom
 	s_time_layer = text_layer_create(GRect(0, 78, 144, 36));
 	text_layer_set_background_color(s_time_layer, GColorClear);
-  	text_layer_set_text_color(s_time_layer, s_font_color);
-	text_layer_set_font(s_time_layer, s_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
 	
 	// day layer below time
 	s_day_layer = text_layer_create(GRect(36, 115, 72, 20));
 	text_layer_set_background_color(s_day_layer, GColorClear);
-  	text_layer_set_text_color(s_day_layer, s_font_color);
-	text_layer_set_font(s_day_layer, s_small_font);
 	text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
-	layer_set_hidden(text_layer_get_layer(s_day_layer), !weekday_on);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
 	
+	set_font();
+	refresh_window();
 	// load time
 	time_t temp = time(NULL);
  	tick_handler(localtime(&temp), SECOND_UNIT);
@@ -290,19 +297,6 @@ char* app_message_error_text(AppMessageResult reason){
 	return log_message;
 }
 
-static void refresh_background_color(char* value){
-	s_background_color = set_color(value);
-	window_set_background_color(s_main_window, s_background_color);
-}
-
-static void refresh_font_color(char* value){
-	s_font_color = set_color(value);
-	text_layer_set_text_color(s_date_layer, s_font_color);
-	text_layer_set_text_color(s_time_layer, s_font_color);
-	text_layer_set_text_color(s_battery_layer, s_font_color);
-	text_layer_set_text_color(s_day_layer, s_font_color);
-}
-
 static void persist_clear(){
 	for (int i = 0; i < SETTINGS_SIZE; ++i){
 		persist_delete(i);
@@ -320,54 +314,31 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				persist_write_string(KEY_DATE_FORMAT, date_format);
 			break;
 			case KEY_MONTH_ZERO:
-				month_zero = t->value->int8;
-				persist_write_int(KEY_MONTH_ZERO, month_zero);
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
-			break;
 			case KEY_DAY_ZERO:
-				day_zero = t->value->int8; 
-				persist_write_int(KEY_DAY_ZERO, day_zero);
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Day zero: %d", day_zero);
-			break;
-			case KEY_BATTERY_ON:
-				battery_on = t->value->int8; 
-				persist_write_int(KEY_BATTERY_ON, battery_on);
-				layer_set_hidden(text_layer_get_layer(s_battery_layer), !battery_on);
-			break;
-			case KEY_PERCENT_SIGN:
-				percent_sign = t->value->int8; 
-				persist_write_int(KEY_PERCENT_SIGN, percent_sign);
-				battery_handler(battery_state_service_peek());
-			break;
-			case KEY_WEEKDAY_ON: 
-				weekday_on = t->value->int8; 
-				persist_write_int(KEY_WEEKDAY_ON, weekday_on);
-				layer_set_hidden(text_layer_get_layer(s_day_layer), !weekday_on);
-			break;
 			case KEY_WEEKDAY_NAMED:
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "named value %s", t->value->cstring);
-				weekday_named = t->value->int8; 
-				persist_write_int(KEY_WEEKDAY_NAMED, weekday_named);
-			break;
 			case KEY_WEEKDAY_START:
-				weekday_start = t->value->int8;
-				persist_write_int(KEY_WEEKDAY_START, weekday_start);
-				// APP_LOG(APP_LOG_LEVEL_DEBUG, "weekday start %d", weekday_start);
+			case KEY_BATTERY_ON:
+			case KEY_PERCENT_SIGN:
+			case KEY_WEEKDAY_ON:
+				**(flags + t->key - KEY_MONTH_ZERO) = t->value->int8;
+				persist_write_int(t->key, t->value->int8);
+				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
 			break;
 			case KEY_WEEKDAY_LANG:
 				locale = set_locale(t->value->cstring);
 				persist_write_string(KEY_WEEKDAY_LANG, t->value->cstring);
 			break;
 			case KEY_COLOR_BACKGROUND:
+				s_background_color = set_color(t->value->cstring);
 				persist_write_string(KEY_COLOR_BACKGROUND, t->value->cstring);
-				refresh_background_color(t->value->cstring);
 			break;
 			case KEY_COLOR_FONT:
+				s_font_color = set_color(t->value->cstring);
 				persist_write_string(KEY_COLOR_FONT, t->value->cstring);
-				refresh_font_color(t->value->cstring);
 			break;
 			case DELETE_SETTINGS:
 				persist_clear();
+				load_settings();
 			break;				
 			default:
 				APP_LOG(APP_LOG_LEVEL_ERROR, "Unrecognized key %d with value %s",
@@ -375,6 +346,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 		}
 		t = dict_read_next(iterator);
 	}
+	refresh_window();
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

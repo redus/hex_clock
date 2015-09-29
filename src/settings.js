@@ -27,6 +27,7 @@ var send_settings = function() {
 };
 
 var delete_settings = function() {
+	
 	Pebble.sendAppMessage(
 		{"DELETE_SETTINGS": true}, data_success, data_error
 	);
