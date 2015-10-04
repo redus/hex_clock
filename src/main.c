@@ -11,15 +11,15 @@ static char *date_format = "yymmdd";
 static Locale locale;
 
 static int weekday_start = 0;
-static int day_zero = 0,
-	month_zero = 0,
+static int month_zero = 0,
+	day_zero = 0,
 	battery_on = 1,
 	percent_sign = 1,
 	weekday_on = 1,
 	weekday_named = 0;
 static int* flags[] = {&month_zero, &day_zero, &battery_on, &percent_sign, &weekday_on,
-					  &weekday_named, &weekday_start};
-static const int DEFAULT_FLAGS[] = {0, 0, 1, 1, 1, 0, 0};
+					  &weekday_named};
+static const int DEFAULT_FLAGS[] = {0, 0, 1, 1, 1, 0};
 
 enum Settings {KEY_DATE_FORMAT, KEY_MONTH_ZERO, KEY_DAY_ZERO, KEY_BATTERY_ON,
 			   KEY_PERCENT_SIGN, KEY_WEEKDAY_ON, KEY_WEEKDAY_NAMED, KEY_WEEKDAY_START,
@@ -60,12 +60,18 @@ static void load_settings(){
 	} else {
 		snprintf(date_format, sizeof(date_format), "yymmdd");
 	}
-	for (int i = KEY_MONTH_ZERO; i <= KEY_WEEKDAY_START; ++i){
+	for (int i = KEY_MONTH_ZERO; i <= KEY_WEEKDAY_NAMED; ++i){
 		if (persist_exists(i)){
 			**(flags + i - KEY_MONTH_ZERO) = persist_read_int(i);
 		} else {
-			**(flags + i - KEY_MONTH_ZERO) = DEFAULT_FLAGS[i];
+			**(flags + i - KEY_MONTH_ZERO) = DEFAULT_FLAGS[i - KEY_MONTH_ZERO];
 		}
+	}
+
+	if (persist_exists(KEY_WEEKDAY_START)){
+		weekday_start = persist_read_int(KEY_WEEKDAY_START);
+	} else {
+		weekday_start = 0;
 	}
 	
 	if (persist_exists(KEY_WEEKDAY_LANG)){
@@ -316,7 +322,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 			case KEY_MONTH_ZERO:
 			case KEY_DAY_ZERO:
 			case KEY_WEEKDAY_NAMED:
-			case KEY_WEEKDAY_START:
 			case KEY_BATTERY_ON:
 			case KEY_PERCENT_SIGN:
 			case KEY_WEEKDAY_ON:
@@ -324,6 +329,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				persist_write_int(t->key, t->value->int8);
 				// APP_LOG(APP_LOG_LEVEL_DEBUG, "Month zero: %d", month_zero);
 			break;
+			case KEY_WEEKDAY_START:
+				weekday_start = t->value->int8;
+				persist_write_int(KEY_WEEKDAY_START, weekday_start);
 			case KEY_WEEKDAY_LANG:
 				locale = set_locale(t->value->cstring);
 				persist_write_string(KEY_WEEKDAY_LANG, t->value->cstring);
