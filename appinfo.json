@@ -22,13 +22,12 @@
     "resources": {
         "media": [
             {
-                "characterRegex": "[0-9A-Z\u00c7\u00c1\u00c5\u00c9\u00d8\u00d6\u00daa-f%]",
                 "file": "fonts/Square.ttf",
                 "name": "FONT_SQUARE_16",
                 "type": "font"
             },
             {
-                "characterRegex": "[0-9A-F:| ]",
+                "characterRegex": "[0-9A-Fa-f:|]",
                 "file": "fonts/Square.ttf",
                 "name": "FONT_SQUARE_34",
                 "type": "font"

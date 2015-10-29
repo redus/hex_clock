@@ -38,7 +38,7 @@ Pebble.addEventListener ('ready',function(e){
 });
 
 Pebble.addEventListener('showConfiguration', function(e) {
-	var url = 'http://www-personal.umich.edu/~jinmoy/yahc/aplite.html';
+	var url = 'http://yahc.iria.me';
 	// comment out until it works
 	/*
 	var watch = Pebble.getActiveWatchInfo();
